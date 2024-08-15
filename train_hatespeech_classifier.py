@@ -1,19 +1,25 @@
 import torch
+import argparse
+
 from model.bert_classifier import (BertClassifier,
                                    process_dataset as process_dataset_bert,
                                    train_model as train_model_bert)
 from model.roberta_classifier import (RobertaClassifier,
                                       process_dataset as process_dataset_roberta,
                                       train_model as train_model_roberta)
+from model.xlm_roberta_classifier import (XLMRobertaClassifier,
+                                          process_dataset as process_dataset_xlm_roberta,
+                                          train_model as train_model_xlm_roberta)
 from utils.preprocess_dataset import load_and_merge_datasets
-import argparse
 
 
-def get_model_and_process_function(model_name):
+def get_model_and_functions(model_name):
     if model_name.lower() == 'bert':
         return BertClassifier, process_dataset_bert, train_model_bert
     elif model_name.lower() == 'roberta':
         return RobertaClassifier, process_dataset_roberta, train_model_roberta
+    elif model_name.lower() == 'xlm-roberta':
+        return XLMRobertaClassifier, process_dataset_xlm_roberta, train_model_xlm_roberta
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
@@ -26,7 +32,7 @@ def main(args):
     merged_df = load_and_merge_datasets(all_paths, inspect=False)
 
     # Get the appropriate model and process function
-    ModelClass, process_dataset, train_model = get_model_and_process_function(args.model)
+    ModelClass, process_dataset, train_model = get_model_and_functions(args.model)
 
     # Initialize the model
     print(f"Initializing {args.model.upper()} classifier...")
@@ -58,8 +64,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a transformer-based hate speech classifier")
-    parser.add_argument("--model", type=str, default="bert", choices=['bert', 'roberta'],
-                        help="Type of model to use (bert or roberta)")
+    parser.add_argument("--model", type=str, default="xlm-roberta", choices=['bert', 'roberta', 'xlm-roberta'],
+                        help="Type of model to use (bert, roberta, or xlm-roberta)")
     parser.add_argument("--offcombr2_path", type=str, default="dataset/OffComBR2.arff",
                         help="Path to OffComBR2 dataset")
     parser.add_argument("--offcombr3_path", type=str, default="dataset/OffComBR3.arff",
