@@ -1,7 +1,21 @@
 import torch
-from model.bert_classifier import BertClassifier, process_dataset, train_model
+from model.bert_classifier import (BertClassifier,
+                                   process_dataset as process_dataset_bert,
+                                   train_model as train_model_bert)
+from model.roberta_classifier import (RobertaClassifier,
+                                      process_dataset as process_dataset_roberta,
+                                      train_model as train_model_roberta)
 from utils.preprocess_dataset import load_and_merge_datasets
 import argparse
+
+
+def get_model_and_process_function(model_name):
+    if model_name.lower() == 'bert':
+        return BertClassifier, process_dataset_bert, train_model_bert
+    elif model_name.lower() == 'roberta':
+        return RobertaClassifier, process_dataset_roberta, train_model_roberta
+    else:
+        raise ValueError(f"Unsupported model: {model_name}")
 
 
 def main(args):
@@ -11,9 +25,12 @@ def main(args):
     print("Loading and merging datasets...")
     merged_df = load_and_merge_datasets(all_paths, inspect=False)
 
+    # Get the appropriate model and process function
+    ModelClass, process_dataset, train_model = get_model_and_process_function(args.model)
+
     # Initialize the model
-    print("Initializing BERT classifier...")
-    model = BertClassifier()
+    print(f"Initializing {args.model.upper()} classifier...")
+    model = ModelClass()
 
     # Process the dataset and get dataloaders
     print("Processing dataset...")
@@ -40,18 +57,24 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train a BERT-based hate speech classifier")
+    parser = argparse.ArgumentParser(description="Train a transformer-based hate speech classifier")
+    parser.add_argument("--model", type=str, default="bert", choices=['bert', 'roberta'],
+                        help="Type of model to use (bert or roberta)")
     parser.add_argument("--offcombr2_path", type=str, default="dataset/OffComBR2.arff",
                         help="Path to OffComBR2 dataset")
     parser.add_argument("--offcombr3_path", type=str, default="dataset/OffComBR3.arff",
                         help="Path to OffComBR3 dataset")
     parser.add_argument("--hatebr_path", type=str, default="dataset/HateBR.csv", help="Path to HateBR dataset")
-    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--learning_rate", type=float, default=2e-5, help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--output_path", type=str, default="hate_speech_classifier.pth",
-                        help="Path to save the trained model")
+    parser.add_argument("--output_path", type=str, default=None,
+                        help="Path to save the trained model. If not provided, a default name will be used.")
 
     args = parser.parse_args()
-    main(args)
 
+    # Set default output path if not provided
+    if args.output_path is None:
+        args.output_path = f"{args.model}_hatespeech_classifier.pth"
+
+    main(args)
