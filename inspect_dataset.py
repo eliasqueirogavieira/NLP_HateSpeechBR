@@ -59,18 +59,18 @@ def load_and_merge_datasets(file_paths, inspect=True):
             inspect_dataset(df, os.path.basename(file_path))
         dfs.append(df)
 
-    merged_df = merge_datasets(dfs)
+    final_df = merge_datasets(dfs)
 
     if inspect:
         print("Merged Dataset:")
-        print(f"Number of instances: {len(merged_df)}")
-        print(f"Number of features: {len(merged_df.columns)}")
+        print(f"Number of instances: {len(final_df)}")
+        print(f"Number of features: {len(final_df.columns)}")
         print("\nFirst few rows:")
-        print(merged_df.head())
+        print(final_df.head())
         print("\nClass distribution:")
-        print(merged_df['label'].value_counts(normalize=True))
+        print(final_df['label'].value_counts(normalize=True))
 
-    return merged_df
+    return final_df
 
 
 if __name__ == "__main__":
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     hatebr_path = 'dataset/HateBR.csv'
 
     all_paths = [offcombr2_path, offcombr3_path, hatebr_path]
-    merged_df = load_and_merge_datasets(all_paths)
+    load_and_merge_datasets(all_paths)
