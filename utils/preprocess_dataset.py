@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from load_dataset import load_arff, load_csv
+from utils.load_dataset import load_arff, load_csv
 
 
 def preprocess_dataset(df, dataset_type):
