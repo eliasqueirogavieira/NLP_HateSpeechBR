@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from utils.load_dataset import load_arff, load_csv
+from load_dataset import load_arff, load_csv
 
 
 def preprocess_dataset(df, dataset_type):
@@ -74,10 +74,9 @@ def load_and_merge_datasets(file_paths, inspect=True):
 
 
 if __name__ == "__main__":
-    # Paths to your files
-    offcombr2_path = 'dataset/OffComBR2.arff'
-    offcombr3_path = 'dataset/OffComBR3.arff'
-    hatebr_path = 'dataset/HateBR.csv'
+    offcombr2_path = '../dataset/OffComBR2.arff'
+    offcombr3_path = '../dataset/OffComBR3.arff'
+    hatebr_path = '../dataset/HateBR.csv'
 
     all_paths = [offcombr2_path, offcombr3_path, hatebr_path]
     load_and_merge_datasets(all_paths)
