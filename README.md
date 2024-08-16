@@ -68,13 +68,37 @@ The project supports the following models:
 - XLM-RoBERTa
 - BERTimbau (Portuguese BERT)
 
-## Dataset
+## Datasets
 
-The dataset should be split into two CSV files:
-- `dataset/train_val_data.csv`: For training and validation
-- `dataset/test_data.csv`: For final evaluation
+This project uses two publicly available datasets for Portuguese hate speech detection:
 
-Each CSV should contain 'text' and 'label' columns.
+1. OffComBR Dataset
+   - Source: [OffComBR GitHub Repository](https://github.com/rogersdepelle/OffComBR/tree/master)
+   - Description: A dataset of offensive comments in Brazilian Portuguese, collected from news websites and social media.
+   - Files used: 
+     - OffComBR2.arff
+     - OffComBR3.arff
+
+2. HateBR Dataset
+   - Source: [HateBR GitHub Repository](https://github.com/franciellevargas/HateBR/tree/main)
+   - Description: A large-scale dataset for hate speech detection in Brazilian Portuguese, collected from Instagram.
+   - File used:
+     - HateBR.csv
+
+These datasets are combined and preprocessed for use in this project. Please refer to the original repositories for more information about the datasets, including their collection methodologies, annotations, and usage terms.
+
+Note: Ensure you comply with the usage terms and provide appropriate attribution when using these datasets.
+
+## Data Preparation
+
+The datasets are preprocessed and combined into two CSV files:
+- `dataset/train_val_data.csv`: For training and validation (80% of the combined data)
+- `dataset/test_data.csv`: For final evaluation (20% of the combined data)
+
+Each CSV contains 'text' and 'label' columns. The preprocessing steps include:
+1. Loading and merging the datasets
+2. Splitting into train+validation and test sets
+3. Saving as CSV files for easy loading during training and evaluation
 
 ## Results
 
@@ -87,3 +111,7 @@ Evaluation results will display accuracy, F1 score, and a detailed classificatio
 - Ensure you have sufficient GPU resources for training larger models.
 - Adjust batch size based on your GPU memory capacity.
 - For best results with Portuguese text, the BERTimbau model is recommended.
+
+## Acknowledgements
+
+We would like to thank the creators and contributors of the OffComBR and HateBR datasets for making their data publicly available for research purposes
