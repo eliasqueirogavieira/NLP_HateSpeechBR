@@ -1,5 +1,8 @@
-import torch
+import os
 import argparse
+
+import pandas as pd
+import torch
 
 from model.bert_classifier import (BertClassifier,
                                    process_dataset as process_dataset_bert,
@@ -10,7 +13,9 @@ from model.roberta_classifier import (RobertaClassifier,
 from model.xlm_roberta_classifier import (XLMRobertaClassifier,
                                           process_dataset as process_dataset_xlm_roberta,
                                           train_model as train_model_xlm_roberta)
-from utils.preprocess_dataset import load_and_merge_datasets
+from model.bertimbau_classifier import (BERTimbauClassifier,
+                                        process_dataset as process_dataset_bertimbau,
+                                        train_model as train_model_bertimbau)
 
 
 def get_model_and_functions(model_name):
@@ -20,16 +25,15 @@ def get_model_and_functions(model_name):
         return RobertaClassifier, process_dataset_roberta, train_model_roberta
     elif model_name.lower() == 'xlm-roberta':
         return XLMRobertaClassifier, process_dataset_xlm_roberta, train_model_xlm_roberta
+    elif model_name.lower() == 'bertimbau':
+        return BERTimbauClassifier, process_dataset_bertimbau, train_model_bertimbau
     else:
         raise ValueError(f"Unsupported model: {model_name}")
 
 
 def main(args):
-    # Load and merge your datasets
-    all_paths = [args.offcombr2_path, args.offcombr3_path, args.hatebr_path]
-
-    print("Loading and merging datasets...")
-    merged_df = load_and_merge_datasets(all_paths, inspect=False)
+    # Load train+validation data
+    train_val_df = pd.read_csv(args.data_path)
 
     # Get the appropriate model and process function
     ModelClass, process_dataset, train_model = get_model_and_functions(args.model)
@@ -40,7 +44,7 @@ def main(args):
 
     # Process the dataset and get dataloaders
     print("Processing dataset...")
-    train_dataloader, val_dataloader = process_dataset(merged_df, test_size=0.2, batch_size=args.batch_size)
+    train_dataloader, val_dataloader = process_dataset(train_val_df, test_size=0.2, batch_size=args.batch_size)
 
     # Check if GPU is available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -64,23 +68,23 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a transformer-based hate speech classifier")
-    parser.add_argument("--model", type=str, default="xlm-roberta", choices=['bert', 'roberta', 'xlm-roberta'],
-                        help="Type of model to use (bert, roberta, or xlm-roberta)")
-    parser.add_argument("--offcombr2_path", type=str, default="dataset/OffComBR2.arff",
-                        help="Path to OffComBR2 dataset")
-    parser.add_argument("--offcombr3_path", type=str, default="dataset/OffComBR3.arff",
-                        help="Path to OffComBR3 dataset")
-    parser.add_argument("--hatebr_path", type=str, default="dataset/HateBR.csv", help="Path to HateBR dataset")
+    parser.add_argument("--model", type=str, default="bertimbau",
+                        choices=['bert', 'roberta', 'xlm-roberta', 'bertimbau'],
+                        help="Type of model to use (bert, roberta, xlm-roberta, or bertimbau)")
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--learning_rate", type=float, default=2e-5, help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+    parser.add_argument("--data_path", type=str, default="dataset/train_val_data.csv",
+                        help="Path to the training and validation data CSV file")
     parser.add_argument("--output_path", type=str, default=None,
                         help="Path to save the trained model. If not provided, a default name will be used.")
 
     args = parser.parse_args()
 
-    # Set default output path if not provided
     if args.output_path is None:
         args.output_path = f"{args.model}_hatespeech_classifier.pth"
+
+    if not os.path.exists(args.data_path):
+        raise FileNotFoundError(f"The specified data file does not exist: {args.data_path}")
 
     main(args)

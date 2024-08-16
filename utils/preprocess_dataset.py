@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+from sklearn.model_selection import train_test_split
+
 from utils.load_dataset import load_arff, load_csv
 
 
@@ -26,57 +28,43 @@ def load_file(file_path):
         raise ValueError(f"Unsupported file type: {file_extension}")
 
 
-def inspect_dataset(df, name):
-    print(f"Dataset: {name}")
-    print(f"Number of instances: {len(df)}")
-    print(f"Number of features: {len(df.columns)}")
-    print("\nFeatures:")
-    for column in df.columns:
-        print(f"- {column}: {df[column].dtype}")
-
-    print("\nFirst few rows:")
-    print(df.head())
-
-    print("\nSummary statistics:")
-    print(df.describe(include='all'))
-
-    print("\nClass distribution:")
-    print(df['label'].value_counts(normalize=True))
-
-    print("\n" + "=" * 50 + "\n")
-
-
 def merge_datasets(dfs):
     merged_df = pd.concat(dfs, ignore_index=True)
     return merged_df
 
 
-def load_and_merge_datasets(file_paths, inspect=True):
+def load_and_merge_datasets(file_paths, test_size=0.2, random_state=42):
     dfs = []
     for file_path in file_paths:
         df = load_file(file_path)
-        if inspect:
-            inspect_dataset(df, os.path.basename(file_path))
         dfs.append(df)
 
-    final_df = merge_datasets(dfs)
+    merged_df = pd.concat(dfs, ignore_index=True)
 
-    if inspect:
-        print("Merged Dataset:")
-        print(f"Number of instances: {len(final_df)}")
-        print(f"Number of features: {len(final_df.columns)}")
-        print("\nFirst few rows:")
-        print(final_df.head())
-        print("\nClass distribution:")
-        print(final_df['label'].value_counts(normalize=True))
+    train_val_df, test_df = train_test_split(merged_df, test_size=test_size, random_state=random_state,
+                                             stratify=merged_df['label'])
 
-    return final_df
+    return train_val_df, test_df
 
 
 if __name__ == "__main__":
     offcombr2_path = '../dataset/OffComBR2.arff'
     offcombr3_path = '../dataset/OffComBR3.arff'
     hatebr_path = '../dataset/HateBR.csv'
-
     all_paths = [offcombr2_path, offcombr3_path, hatebr_path]
-    load_and_merge_datasets(all_paths)
+
+    train_val_df, test_df = load_and_merge_datasets(all_paths)
+
+    print("Train+Validation Dataset:")
+    print(f"Number of instances: {len(train_val_df)}")
+    print("\nClass distribution:")
+    print(train_val_df['label'].value_counts(normalize=True))
+
+    print("\nTest Dataset:")
+    print(f"Number of instances: {len(test_df)}")
+    print("\nClass distribution:")
+    print(test_df['label'].value_counts(normalize=True))
+
+    # Save the datasets
+    train_val_df.to_csv('../dataset/train_val_data.csv', index=False)
+    test_df.to_csv('../dataset/test_data.csv', index=False)
