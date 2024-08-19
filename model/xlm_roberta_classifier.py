@@ -30,11 +30,15 @@ def prepare_data(texts, labels, tokenizer, max_length=128):
     return dataset
 
 
-def train_model(model, train_dataloader, val_dataloader, epochs=3, learning_rate=1e-5):
+def train_model(model, train_dataloader, val_dataloader=None, epochs=3, learning_rate=1e-5, patience=3):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     loss_fn = nn.CrossEntropyLoss()
+
+    best_f1 = 0
+    best_model = None
+    patience_counter = 0
 
     for epoch in range(epochs):
         model.train()
@@ -49,27 +53,44 @@ def train_model(model, train_dataloader, val_dataloader, epochs=3, learning_rate
             total_loss += loss.item()
 
         avg_train_loss = total_loss / len(train_dataloader)
+        print(f'\nEpoch {epoch + 1}: Avg. Training Loss: {avg_train_loss:.4f}')
 
-        model.eval()
-        val_accuracy = 0
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for batch in val_dataloader:
-                input_ids, attention_mask, labels = [b.to(device) for b in batch]
-                outputs = model(input_ids, attention_mask)
-                predictions = torch.argmax(outputs, dim=1)
-                val_accuracy += (predictions == labels).sum().item()
-                all_predictions.extend(predictions.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
+        if val_dataloader is not None:
+            model.eval()
+            val_accuracy = 0
+            all_predictions = []
+            all_labels = []
+            with torch.no_grad():
+                for batch in val_dataloader:
+                    input_ids, attention_mask, labels = [b.to(device) for b in batch]
+                    outputs = model(input_ids, attention_mask)
+                    predictions = torch.argmax(outputs, dim=1)
+                    val_accuracy += (predictions == labels).sum().item()
+                    all_predictions.extend(predictions.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
 
-        val_accuracy /= len(val_dataloader.dataset)
-        f1 = f1_score(all_labels, all_predictions, average='weighted')
+            val_accuracy /= len(val_dataloader.dataset)
+            f1 = f1_score(all_labels, all_predictions, average='weighted')
 
-        print(
-            f'Epoch {epoch + 1}: Avg. Training Loss: {avg_train_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, F1 Score: {f1:.4f}')
+            print(f'Validation Accuracy: {val_accuracy:.4f}, F1 Score: {f1:.4f}')
 
-    return model
+            # Early stopping logic
+            if f1 > best_f1:
+                best_f1 = f1
+                best_model = model.state_dict()
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= patience:
+                print(f"Early stopping triggered after epoch {epoch + 1}")
+                break
+
+    # Load the best model if early stopping occurred
+    if best_model is not None:
+        model.load_state_dict(best_model)
+
+    return model, best_f1
 
 
 def process_dataset(merged_df, test_size=0.2, batch_size=32):
@@ -77,16 +98,20 @@ def process_dataset(merged_df, test_size=0.2, batch_size=32):
     texts = merged_df['text'].tolist()
     labels = merged_df['label'].tolist()
 
-    train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=test_size,
-                                                                        random_state=42)
+    if test_size > 0:
+        train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=test_size,
+                                                                            random_state=42)
+        train_dataset = prepare_data(train_texts, train_labels, tokenizer)
+        val_dataset = prepare_data(val_texts, val_labels, tokenizer)
 
-    train_dataset = prepare_data(train_texts, train_labels, tokenizer)
-    val_dataset = prepare_data(val_texts, val_labels, tokenizer)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
-
-    return train_dataloader, val_dataloader
+        return train_dataloader, val_dataloader
+    else:
+        dataset = prepare_data(texts, labels, tokenizer)
+        train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return train_dataloader, None
 
 
 def main(merged_df, epochs=3, learning_rate=1e-5, batch_size=32):
