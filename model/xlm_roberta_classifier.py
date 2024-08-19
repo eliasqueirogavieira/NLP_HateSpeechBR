@@ -25,8 +25,47 @@ class XLMRobertaClassifier(nn.Module):
 
 
 def prepare_data(texts, labels, tokenizer, max_length=128):
-    encodings = tokenizer(texts, truncation=True, padding=True, max_length=max_length, return_tensors='pt')
-    dataset = TensorDataset(encodings['input_ids'], encodings['attention_mask'], torch.tensor(labels))
+    # Ensure texts and labels are lists
+    if not isinstance(texts, list) or not isinstance(labels, list):
+        raise ValueError("Both 'texts' and 'labels' must be lists.")
+
+    # Ensure texts and labels have the same length
+    if len(texts) != len(labels):
+        raise ValueError(f"Number of texts ({len(texts)}) does not match number of labels ({len(labels)}).")
+
+    # Remove any None or empty string entries
+    valid_data = []
+    for i, (text, label) in enumerate(zip(texts, labels)):
+        if text and isinstance(text, str):
+            valid_data.append((text, label))
+        else:
+            print(f"Invalid entry at index {i}:")
+            print(f"Text: {repr(text)}")
+            print(f"Label: {label}")
+            print(f"Type of text: {type(text)}")
+            print("---")
+
+    if len(valid_data) != len(texts):
+        print(f"Warning: Removed {len(texts) - len(valid_data)} invalid entries.")
+
+    texts, labels = zip(*valid_data)
+
+    try:
+        encodings = tokenizer(list(texts), truncation=True, padding=True, max_length=max_length, return_tensors='pt')
+    except Exception as e:
+        print(f"Error during tokenization: {e}")
+        print(f"First few texts: {texts[:5]}")
+        raise
+
+    try:
+        dataset = TensorDataset(encodings['input_ids'], encodings['attention_mask'], torch.tensor(labels))
+    except Exception as e:
+        print(f"Error creating TensorDataset: {e}")
+        print(f"Shape of input_ids: {encodings['input_ids'].shape}")
+        print(f"Shape of attention_mask: {encodings['attention_mask'].shape}")
+        print(f"Length of labels: {len(labels)}")
+        raise
+
     return dataset
 
 
@@ -112,10 +151,3 @@ def process_dataset(merged_df, test_size=0.2, batch_size=32):
         dataset = prepare_data(texts, labels, tokenizer)
         train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         return train_dataloader, None
-
-
-def main(merged_df, epochs=3, learning_rate=1e-5, batch_size=32):
-    model = XLMRobertaClassifier()
-    train_dataloader, val_dataloader = process_dataset(merged_df, batch_size=batch_size)
-    trained_model = train_model(model, train_dataloader, val_dataloader, epochs=epochs, learning_rate=learning_rate)
-    return trained_model

@@ -1,4 +1,4 @@
-instagram_comments,offensive_language,offensiveness_levels,hate_speech
+text,label,offensiveness_levels,hate_speech
 este lixo ...,1,1,-1
 Mais um lixo,1,1,-1
 Essa nao tem vergonha na cara!!,1,2,-1
