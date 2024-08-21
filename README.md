@@ -17,8 +17,16 @@ cd NLP_HateSpeechBR
 ```
 
 2. Install the required packages:
+- Python 3.11 
+
+#### Install the requirements:
+
 ```
 pip install -r requirements.txt
+```
+#### Install PyTorch with CUDA if available for you machine:
+```
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 ```
 
 ## Training the Model
