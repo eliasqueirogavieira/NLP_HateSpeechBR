@@ -171,11 +171,11 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a BERTimbau-based hate speech classifier with hyperparameter "
                                                  "tuning and cross-validation")
-    parser.add_argument("--model", type=str, default="xlm-roberta",
+    parser.add_argument("--model", type=str, default="bertimbau",
                         choices=['bert', 'roberta', 'xlm-roberta', 'bertimbau'],
                         help="Type of model to use (bert, roberta, xlm-roberta, or bertimbau)")
     parser.add_argument("--epochs", type=int, default=15, help="Number of training epochs")
-    parser.add_argument("--learning_rate", type=float, default=1e-5, help="Learning rate")
+    parser.add_argument("--learning_rate", type=float, default=2e-5, help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     parser.add_argument("--data_path", type=str, default="dataset/train_val_data.csv",
                         help="Path to the training and validation data CSV file")
