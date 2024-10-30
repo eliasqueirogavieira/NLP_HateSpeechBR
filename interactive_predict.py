@@ -105,14 +105,14 @@ def preprocess_text(text):
     if not isinstance(text, str) or text.lower() == 'nan':
         return ''  # Return empty string for invalid entries
 
-    text = remove_mentions_hashtags(text)  # Step 1: Remove @mentions and #hashtags
+    # text = remove_mentions_hashtags(text)  # Step 1: Remove @mentions and #hashtags
     text = remove_urls(text)  # Step 2: Remove URLs and isolated 'http/https'
-    text = normalize_text(text, SUBSTITUTION_MAP)  # Step 3: Normalize text
-    text = remove_punctuation(text)  # Step 4: Remove punctuation and underscores
+    # text = normalize_text(text, SUBSTITUTION_MAP)  # Step 3: Normalize text
+    # text = remove_punctuation(text)  # Step 4: Remove punctuation and underscores
     text = to_lowercase(text)  # Step 5: Convert to lowercase
     text = remove_rt(text)  # Step 6: Remove standalone 'rt'
     # Optionally, trim extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    # text = re.sub(r'\s+', ' ', text).strip()
 
     return text if text else ''  # Ensure non-empty
 

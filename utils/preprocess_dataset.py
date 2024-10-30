@@ -90,14 +90,14 @@ def preprocess_text(text):
     if not isinstance(text, str) or text.lower() == 'nan':
         return ''  # Return empty string for invalid entries
 
-    text = remove_mentions_hashtags(text)  # Step 1: Remove @mentions and #hashtags
+    #text = remove_mentions_hashtags(text)  # Step 1: Remove @mentions and #hashtags
     text = remove_urls(text)  # Step 2: Remove URLs and isolated 'http/https'
-    text = normalize_text(text, SUBSTITUTION_MAP)  # Step 3: Normalize text
-    text = remove_punctuation(text)  # Step 4: Remove punctuation and underscores
+    #text = normalize_text(text, SUBSTITUTION_MAP)  # Step 3: Normalize text
+    #text = remove_punctuation(text)  # Step 4: Remove punctuation and underscores
     text = to_lowercase(text)  # Step 5: Convert to lowercase
     text = remove_rt(text)  # Step 6: Remove standalone 'rt'
     # Optionally, trim extra whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    #text = re.sub(r'\s+', ' ', text).strip()
 
     return text if text else ''  # Ensure non-empty
 
@@ -191,7 +191,8 @@ if __name__ == "__main__":
     offcombr3_path = '../dataset/OffComBR3.arff'
     hatebr_path = '../dataset/HateBR.csv'
     kaggleds_path = '../dataset/kaggle_dataset.csv'
-    all_paths = [offcombr2_path, offcombr3_path, hatebr_path, kaggleds_path]
+    llmds_path = '../dataset/AI_processed_dataset.csv'
+    all_paths = [offcombr2_path, offcombr3_path, hatebr_path, kaggleds_path, llmds_path]
 
     # Load and merge datasets
     train_val_df, test_df = load_and_merge_datasets(all_paths)
